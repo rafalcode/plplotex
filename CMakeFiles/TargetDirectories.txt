@@ -1,0 +1,2 @@
+/home/nutria/plplot_cex/CMakeFiles/rebuild_cache.dir
+/home/nutria/plplot_cex/CMakeFiles/edit_cache.dir

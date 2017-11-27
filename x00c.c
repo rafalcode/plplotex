@@ -1,3 +1,5 @@
+// $Id: x00c.c 12001 2011-10-27 05:26:31Z airwin $
+//
 // Simple demo of a 2D line plot.
 //
 // Copyright (C) 2011  Alan W. Irwin
@@ -23,11 +25,11 @@
 #include "plcdemos.h"
 #define NSIZE    101
 
-int main( int argc, char *argv[] )
+int main( int argc, const char *argv[] )
 {
     PLFLT x[NSIZE], y[NSIZE];
     PLFLT xmin = 0., xmax = 1., ymin = 0., ymax = 100.;
-    int i;
+    int   i;
 
     // Prepare data to be plotted.
     for ( i = 0; i < NSIZE; i++ ) {
@@ -43,13 +45,13 @@ int main( int argc, char *argv[] )
 
     // Create a labelled box to hold the plot.
     plenv( xmin, xmax, ymin, ymax, 0, 0 );
-    pllab("x", "y=100 x#u2#d", "Simple PLplot demo of a 2D line plot");
+    pllab( "x", "y=100 x#u2#d", "Simple PLplot demo of a 2D line plot" );
 
     // Plot the data that was prepared above.
-    plline(NSIZE, x, y);
+    plline( NSIZE, x, y );
 
     // Close PLplot library
     plend();
 
-    return 0;
+    exit( 0 );
 }

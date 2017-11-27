@@ -1,3 +1,5 @@
+// $Id: x06c.c 11289 2010-10-29 20:44:17Z airwin $
+//
 //      Font demo.
 //
 
@@ -10,7 +12,7 @@
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     char  text[10];
     int   i, j, k, kind_font, font, maxfont;

@@ -1,3 +1,5 @@
+// $Id: x20c.c 12095 2011-12-03 08:56:15Z andrewross $
+//
 //      plimage demo
 //
 //
@@ -11,7 +13,7 @@
 
 void save_plot( char * );
 void gray_cmap( PLINT );
-int read_img( PLCHAR_VECTOR, PLFLT ***, int *, int *, int * );
+int read_img( const char *, PLFLT ***, int *, int *, int * );
 int get_clip( PLFLT *, PLFLT *, PLFLT *, PLFLT * );
 
 int  dbg           = 0;
@@ -87,7 +89,7 @@ mypltr( PLFLT x, PLFLT y, PLFLT *tx, PLFLT *ty, PLPointer pltr_data )
 }
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     PLFLT               x[XDIM], y[YDIM], **z, **r;
     PLFLT               xi, yi, xe, ye;
@@ -99,21 +101,15 @@ main( int argc, char *argv[] )
     PLcGrid2            cgrid2;
     PLFLT               xx, yy;
 
+    //
     // Bugs in plimage():
     // -at high magnifications, the left and right edge are ragged, try
     //    ./x20c -dev xwin -wplt 0.3,0.3,0.6,0.6 -ori 0.5
-    // AWI comment as of 2016-02-04.  This bug appears to no longer exist.
-
     //
     // Bugs in x20c.c:
-    // -if the window is resized after a selection is made on "Chloe", when
+    // -if the window is resized after a selection is made on "lena", when
     //  making a new selection the old one will re-appear.
-
-    //  AWI comment as of 2016-02-04.  I confirm that both the old
-    // and new selection areas are outlined, but only the new one
-    // is actually used for the selection so this is relatively harmless
-    // for this application.  Nevertheless, it should be looked into as a
-    // likely rendering issue with plbuf.
+    //
 
     // Parse and process command line arguments
 
@@ -144,7 +140,7 @@ main( int argc, char *argv[] )
 
         pllab( "...around a blue square.", " ", "A red border should appear..." );
 
-        plimage( (PLFLT_MATRIX) z, XDIM, YDIM,
+        plimage( (const PLFLT * const *) z, XDIM, YDIM,
             1., (PLFLT) XDIM, 1., (PLFLT) YDIM, 0., 0.,
             1., (PLFLT) XDIM, 1., (PLFLT) YDIM );
     }
@@ -170,7 +166,7 @@ main( int argc, char *argv[] )
 
         pllab( "No, an amplitude clipped \"sombrero\"", "", "Saturn?" );
         plptex( 2., 2., 3., 4., 0., "Transparent image" );
-        plimage( (PLFLT_MATRIX) z, XDIM, YDIM, 0., 2. * M_PI, 0., 3. * M_PI, 0.05, 1.,
+        plimage( (const PLFLT * const *) z, XDIM, YDIM, 0., 2. * M_PI, 0., 3. * M_PI, 0.05, 1.,
             0., 2. * M_PI, 0., 3. * M_PI );
         plFree2dGrid( r, XDIM, YDIM );
 
@@ -181,34 +177,31 @@ main( int argc, char *argv[] )
 
     plFree2dGrid( z, XDIM, YDIM );
 
-    // read Chloe image
-    // Note we try three different locations to cover the case where this
-    // examples is being run from the test_c.sh script or directly on Windows
-    if ( read_img( "Chloe.pgm", &img_f, &width, &height, &num_col ) )
+    // read Lena image
+    // Note we try two different locations to cover the case where this
+    // examples is being run from the test_c.sh script
+    if ( read_img( "lena.pgm", &img_f, &width, &height, &num_col ) )
     {
-        if ( read_img( "../Chloe.pgm", &img_f, &width, &height, &num_col ) )
+        if ( read_img( "../lena.pgm", &img_f, &width, &height, &num_col ) )
         {
-            if ( read_img( "../../Chloe.pgm", &img_f, &width, &height, &num_col ) )
-            {
-                fprintf( stderr, "No such file" );
-                plend();
-                exit( 1 );
-            }
+            fprintf( stderr, "No such file" );
+            plend();
+            exit( 1 );
         }
     }
 
     // set gray colormap
     gray_cmap( num_col );
 
-    // display Chloe
+    // display Lena
     plenv( 1., width, 1., height, 1, -1 );
 
     if ( !nointeractive )
-        pllab( "Set and drag Button 1 to (re)set selection, Button 2 to finish.", " ", "Chloe..." );
+        pllab( "Set and drag Button 1 to (re)set selection, Button 2 to finish.", " ", "Lena..." );
     else
-        pllab( "", " ", "Chloe..." );
+        pllab( "", " ", "Lena..." );
 
-    plimage( (PLFLT_MATRIX) img_f, width, height, 1., width, 1., height, 0., 0.,
+    plimage( (const PLFLT * const *) img_f, width, height, 1., width, 1., height, 0., 0.,
         1., width, 1., height );
 
     // plend();exit(0);
@@ -216,8 +209,8 @@ main( int argc, char *argv[] )
     // selection/expansion demo
     if ( !nointeractive )
     {
-        xi = 25.; xe = 130.;
-        yi = 235.; ye = 125.;
+        xi = 200.; xe = 330.;
+        yi = 280.; ye = 220.;
 
         if ( get_clip( &xi, &xe, &yi, &ye ) ) // get selection rectangle
         {
@@ -249,24 +242,24 @@ main( int argc, char *argv[] )
         pladv( 0 );
 
         // display selection only
-        plimage( (PLFLT_MATRIX) img_f, width, height, 1., width, 1., height, 0., 0., xi, xe, ye, yi );
+        plimage( (const PLFLT * const *) img_f, width, height, 1., width, 1., height, 0., 0., xi, xe, ye, yi );
 
         plspause( 1 );
 
         // zoom in selection
         plenv( xi, xe, ye, yi, 1, -1 );
-        plimage( (PLFLT_MATRIX) img_f, width, height, 1., width, 1., height, 0., 0., xi, xe, ye, yi );
+        plimage( (const PLFLT * const *) img_f, width, height, 1., width, 1., height, 0., 0., xi, xe, ye, yi );
     }
 
     // Base the dynamic range on the image contents.
-    plMinMax2dGrid( (PLFLT_MATRIX) img_f, width, height, &img_max, &img_min );
+    plMinMax2dGrid( (const PLFLT * const *) img_f, width, height, &img_max, &img_min );
 
     // Draw a saturated version of the original image.  Only use the middle 50%
     // of the image's full dynamic range.
     plcol0( 2 );
     plenv( 0, width, 0, height, 1, -1 );
     pllab( "", "", "Reduced dynamic range image example" );
-    plimagefr( (PLFLT_MATRIX) img_f, width, height, 0., width, 0., height, 0., 0., img_min + img_max * 0.25, img_max - img_max * 0.25, NULL, NULL );
+    plimagefr( (const PLFLT * const *) img_f, width, height, 0., width, 0., height, 0., 0., img_min + img_max * 0.25, img_max - img_max * 0.25, NULL, NULL );
 
     // Draw a distorted version of the original image, showing its full dynamic range.
     plenv( 0, width, 0, height, 1, -1 );
@@ -299,7 +292,7 @@ main( int argc, char *argv[] )
         }
     }
 
-    plimagefr( (PLFLT_MATRIX) img_f, width, height, 0., width, 0., height, 0., 0., img_min, img_max, pltr2, &cgrid2 );
+    plimagefr( (const PLFLT * const *) img_f, width, height, 0., width, 0., height, 0., 0., img_min, img_max, pltr2, &cgrid2 );
 
     plFree2dGrid( cgrid2.xg, width + 1, height + 1 );
     plFree2dGrid( cgrid2.yg, width + 1, height + 1 );
@@ -310,7 +303,7 @@ main( int argc, char *argv[] )
 }
 
 // read image from file in binary ppm format
-int read_img( PLCHAR_VECTOR fname, PLFLT ***img_f, int *width, int *height, int *num_col )
+int read_img( const char *fname, PLFLT ***img_f, int *width, int *height, int *num_col )
 {
     FILE          *fp;
     unsigned char *img;

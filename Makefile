@@ -15,7 +15,7 @@ LIBS=-lplplotd -lltdl -lm -lshp -lcsirocsa -lcsironn -lqhull -lqsastime
 # To run these progs without the pesky interrruptions:
 # ./x00c -o o2.png -dev pngcairo
 
-EXES=x00c x01c
+EXES=x00c x01c x02c
 
 x00c: x00c.c
 	${CC} ${CFLAGS} -o $@ $^ $(LIBS0)
@@ -28,6 +28,9 @@ x01c: x01c.c
 # fuer mac
 x01c_: x01c.c
 	${CC} ${CFLAGS} -I/opt/local/include -o $@ $^ $(LIBSM)
+
+x02c: x02c.c
+	${CC} ${CFLAGS} -o $@ $^ $(LIBS)
 
 .PHONY: clean
 

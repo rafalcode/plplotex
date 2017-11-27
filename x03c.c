@@ -1,3 +1,5 @@
+// $Id: x03c.c 11663 2011-03-20 23:08:13Z hezekiahcarty $
+//
 //      Polar plot demo.
 //
 
@@ -10,7 +12,7 @@
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     int          i;
     PLFLT        dtr, theta, dx, dy, r, offset;

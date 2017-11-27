@@ -1,3 +1,5 @@
+// $Id: test_plend.c 11289 2010-10-29 20:44:17Z airwin $
+//
 //      plend and plend1 testing demo.
 //
 
@@ -10,7 +12,7 @@
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
 // Parse and process command line arguments
 

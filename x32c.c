@@ -1,3 +1,5 @@
+// $Id: x32c.c 11680 2011-03-27 17:57:51Z airwin $
+//
 //      Box plot demo.
 //
 // Copyright (C) 2008 by FLLL <http://www.flll.jku.at>
@@ -36,7 +38,7 @@ plcircle( PLFLT x, PLFLT y );
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     int          i;
     char         string[20];

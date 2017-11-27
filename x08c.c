@@ -1,3 +1,5 @@
+// $Id: x08c.c 12095 2011-12-03 08:56:15Z andrewross $
+//
 //      3-d plot demo.
 //
 // Copyright (C) 2004  Alan W. Irwin
@@ -24,29 +26,21 @@
 
 #include "plcdemos.h"
 
-// plexit not declared in public header!  However, explicit
-// declaration (commented out below) does not work for g++ compiler
-// (used for non-dynamic and static cases) for unknown reasons.  So
-// use private header instead to declare plexit (which does work).
-//PLDLLIMPEXP void
-//plexit( PLCHAR_VECTOR errormsg );
-#include "plplotP.h"
+// plexit not declared in public header!
+PLDLLIMPEXP void
+plexit( const char *errormsg );
 
-// These values must be odd, for the middle
-// of the index range to be an integer, and thus
-// to correspond to the exact floating point centre
-// of the sombrero.
 #define XPTS    35              // Data points in x
-#define YPTS    45              // Data points in y
+#define YPTS    46              // Data points in y
 
-static PLFLT alt[] = { 60.0, 40.0 };
-static PLFLT az[] = { 30.0, -30.0 };
+static PLFLT alt[] = { 60.0, 20.0 };
+static PLFLT az[] = { 30.0, 60.0 };
 static void cmap1_init( int );
 
-static PLCHAR_VECTOR title[] =
+static const char *title[] =
 {
     "#frPLplot Example 8 - Alt=60, Az=30",
-    "#frPLplot Example 8 - Alt=40, Az=-30",
+    "#frPLplot Example 8 - Alt=20, Az=60",
 };
 
 //--------------------------------------------------------------------------
@@ -102,27 +96,17 @@ cmap1_init( int gray )
 //--------------------------------------------------------------------------
 
 
-static int           rosen;
-static int           if_plfsurf3d;
+static int           sombrero;
 
 static PLOptionTable options[] = {
     {
-        "rosen",             // Turns on use of Rosenbrock function
+        "sombrero",             // Turns on use of Sombrero function
         NULL,
         NULL,
-        &rosen,
+        &sombrero,
         PL_OPT_BOOL,
-        "-rosen",
-        "Use the log_e of the \"Rosenbrock\" function"
-    },
-    {
-        "if_plfsurf3d",
-        NULL,
-        NULL,
-        &if_plfsurf3d,
-        PL_OPT_BOOL,
-        "-if_plfsurf3d",
-        "Use C-only plfsurf3d API rather then usual cross-language plsurf3d API"
+        "-sombrero",
+        "Use the \"sombrero\" function."
     },
     {
         NULL,                   // option
@@ -138,38 +122,23 @@ static PLOptionTable options[] = {
 #define LEVELS    10
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     int      i, j, k;
-    PLFLT    *x, *y, **z;
-    // Shut up spurious undefined warnings from the compiler.
-    PLFLT    *z_row_major = NULL, *z_col_major = NULL;
-    PLFLT    dx           = 2. / (PLFLT) ( XPTS - 1 );
-    PLFLT    dy           = 2. / (PLFLT) ( YPTS - 1 );
+    PLFLT    *x, *y, **z, *z_row_major, *z_col_major;
     PLfGrid2 grid_c, grid_row_major, grid_col_major;
     PLFLT    xx, yy, r;
     PLINT    ifshade;
     PLFLT    zmin, zmax, step;
     PLFLT    clevel[LEVELS];
     PLINT    nlevel = LEVELS;
-
-    PLINT    indexxmin = 0;
-    PLINT    indexxmax = XPTS;
-    PLINT    *indexymin;
-    PLINT    *indexymax;
-    PLFLT    **zlimited;
-    // parameters of ellipse (in x, y index coordinates) that limits the data.
-    // x0, y0 correspond to the exact floating point centre of the index
-    // range.
-    PLFLT x0 = 0.5 * (PLFLT) ( XPTS - 1 );
-    PLFLT a  = 0.9 * x0;
-    PLFLT y0 = 0.5 * (PLFLT) ( YPTS - 1 );
-    PLFLT b  = 0.7 * y0;
-    PLFLT square_root;
+    int      rosen  = 1;
 
     // Parse and process command line arguments
     plMergeOpts( options, "x08c options", NULL );
     (void) plparseopts( &argc, argv, PL_PARSE_FULL );
+    if ( sombrero )
+        rosen = 0;
 
     // Initialize plplot
 
@@ -181,32 +150,29 @@ main( int argc, char *argv[] )
     y = (PLFLT *) calloc( YPTS, sizeof ( PLFLT ) );
 
     plAlloc2dGrid( &z, XPTS, YPTS );
-    if ( if_plfsurf3d )
-    {
-        z_row_major = (PLFLT *) malloc( XPTS * YPTS * sizeof ( PLFLT ) );
-        z_col_major = (PLFLT *) malloc( XPTS * YPTS * sizeof ( PLFLT ) );
-        if ( !z_row_major || !z_col_major )
-            plexit( "Memory allocation error" );
+    z_row_major = (PLFLT *) malloc( XPTS * YPTS * sizeof ( PLFLT ) );
+    z_col_major = (PLFLT *) malloc( XPTS * YPTS * sizeof ( PLFLT ) );
+    if ( !z_row_major || !z_col_major )
+        plexit( "Memory allocation error" );
 
-        grid_c.f         = z;
-        grid_row_major.f = (PLFLT **) z_row_major;
-        grid_col_major.f = (PLFLT **) z_col_major;
-        grid_c.nx        = grid_row_major.nx = grid_col_major.nx = XPTS;
-        grid_c.ny        = grid_row_major.ny = grid_col_major.ny = YPTS;
-    }
+    grid_c.f         = z;
+    grid_row_major.f = (PLFLT **) z_row_major;
+    grid_col_major.f = (PLFLT **) z_col_major;
+    grid_c.nx        = grid_row_major.nx = grid_col_major.nx = XPTS;
+    grid_c.ny        = grid_row_major.ny = grid_col_major.ny = YPTS;
 
     for ( i = 0; i < XPTS; i++ )
     {
-        x[i] = -1. + (PLFLT) i * dx;
+        x[i] = ( (double) ( i - ( XPTS / 2 ) ) / (double) ( XPTS / 2 ) );
         if ( rosen )
             x[i] *= 1.5;
     }
 
-    for ( j = 0; j < YPTS; j++ )
+    for ( i = 0; i < YPTS; i++ )
     {
-        y[j] = -1. + (PLFLT) j * dy;
+        y[i] = (double) ( i - ( YPTS / 2 ) ) / (double) ( YPTS / 2 );
         if ( rosen )
-            y[j] += 0.5;
+            y[i] += 0.5;
     }
 
     for ( i = 0; i < XPTS; i++ )
@@ -219,7 +185,7 @@ main( int argc, char *argv[] )
             {
                 z[i][j] = pow( 1. - xx, 2. ) + 100. * pow( yy - pow( xx, 2. ), 2. );
 
-                // The log argument might be zero for just the right grid.
+                // The log argument may be zero for just the right grid.
                 if ( z[i][j] > 0. )
                     z[i][j] = log( z[i][j] );
                 else
@@ -231,81 +197,12 @@ main( int argc, char *argv[] )
                 z[i][j] = exp( -r * r ) * cos( 2.0 * M_PI * r );
             }
 
-            if ( if_plfsurf3d )
-            {
-                z_row_major[i * YPTS + j] = z[i][j];
-                z_col_major[i + XPTS * j] = z[i][j];
-            }
+            z_row_major[i * YPTS + j] = z[i][j];
+            z_col_major[i + XPTS * j] = z[i][j];
         }
     }
 
-    // Allocate and calculate y index ranges and corresponding zlimited.
-    plAlloc2dGrid( &zlimited, XPTS, YPTS );
-    indexymin = (PLINT *) malloc( XPTS * sizeof ( PLINT ) );
-    indexymax = (PLINT *) malloc( XPTS * sizeof ( PLINT ) );
-    if ( !indexymin || !indexymax )
-        plexit( "Memory allocation error" );
-
-    //printf("XPTS = %d\n", XPTS);
-    //printf("x0 = %f\n", x0);
-    //printf("a = %f\n", a);
-    //printf("YPTS = %d\n", YPTS);
-    //printf("y0 = %f\n", y0);
-    //printf("b = %f\n", b);
-
-    // These values should all be ignored because of the i index range.
-#if 0
-    for ( i = 0; i < indexxmin; i++ )
-    {
-        indexymin[i] = 0;
-        indexymax[i] = YPTS;
-        for ( j = indexymin[i]; j < indexymax[i]; j++ )
-            // Mark with large value to check this is ignored.
-            zlimited[i][j] = 1.e300;
-    }
-#endif
-    for ( i = indexxmin; i < indexxmax; i++ )
-    {
-        square_root = sqrt( 1. - MIN( 1., pow( ( i - x0 ) / a, 2. ) ) );
-        // Add 0.5 to find nearest integer and therefore preserve symmetry
-        // with regard to lower and upper bound of y range.
-        indexymin[i] = MAX( 0, (PLINT) ( 0.5 + y0 - b * square_root ) );
-        // indexymax calculated with the convention that it is 1
-        // greater than highest valid index.
-        indexymax[i] = MIN( YPTS, 1 + (PLINT) ( 0.5 + y0 + b * square_root ) );
-        //printf("i, b*square_root, indexymin[i], YPTS - indexymax[i] = %d, %e, %d, %d\n", i, b*square_root, indexymin[i], YPTS - indexymax[i]);
-
-#if 0
-        // These values should all be ignored because of the j index range.
-        for ( j = 0; j < indexymin[i]; j++ )
-            // Mark with large value to check this is ignored.
-            zlimited[i][j] = 1.e300;
-#endif
-
-        for ( j = indexymin[i]; j < indexymax[i]; j++ )
-            zlimited[i][j] = z[i][j];
-
-#if 0
-        // These values should all be ignored because of the j index range.
-        for ( j = indexymax[i]; j < YPTS; j++ )
-            // Mark with large value to check this is ignored.
-            zlimited[i][j] = 1.e300;
-#endif
-    }
-
-#if 0
-    // These values should all be ignored because of the i index range.
-    for ( i = indexxmax; i < XPTS; i++ )
-    {
-        indexymin[i] = 0;
-        indexymax[i] = YPTS;
-        for ( j = indexymin[i]; j < indexymax[i]; j++ )
-            // Mark with large value to check this is ignored.
-            zlimited[i][j] = 1.e300;
-    }
-#endif
-
-    plMinMax2dGrid( (PLFLT_MATRIX) z, XPTS, YPTS, &zmax, &zmin );
+    plMinMax2dGrid( (const PLFLT * const *) z, XPTS, YPTS, &zmax, &zmin );
     step = ( zmax - zmin ) / ( nlevel + 1 );
     for ( i = 0; i < nlevel; i++ )
         clevel[i] = zmin + step + step * i;
@@ -314,7 +211,7 @@ main( int argc, char *argv[] )
 
     for ( k = 0; k < 2; k++ )
     {
-        for ( ifshade = 0; ifshade < 5; ifshade++ )
+        for ( ifshade = 0; ifshade < 4; ifshade++ )
         {
             pladv( 0 );
             plvpor( 0.0, 1.0, 0.0, 0.9 );
@@ -335,39 +232,22 @@ main( int argc, char *argv[] )
             if ( ifshade == 0 ) // diffuse light surface plot
             {
                 cmap1_init( 1 );
-                if ( if_plfsurf3d )
-                    plfsurf3d( x, y, plf2ops_c(), (PLPointer) z, XPTS, YPTS, 0, NULL, 0 );
-                else
-                    plsurf3d( x, y, (PLFLT_MATRIX) z, XPTS, YPTS, 0, NULL, 0 );
+                plfsurf3d( x, y, plf2ops_c(), (PLPointer) z, XPTS, YPTS, 0, NULL, 0 );
             }
             else if ( ifshade == 1 ) // magnitude colored plot
             {
                 cmap1_init( 0 );
-                if ( if_plfsurf3d )
-                    plfsurf3d( x, y, plf2ops_grid_c(), ( PLPointer ) & grid_c, XPTS, YPTS, MAG_COLOR, NULL, 0 );
-                else
-                    plsurf3d( x, y, (PLFLT_MATRIX) z, XPTS, YPTS, MAG_COLOR, NULL, 0 );
+                plfsurf3d( x, y, plf2ops_grid_c(), ( PLPointer ) & grid_c, XPTS, YPTS, MAG_COLOR, NULL, 0 );
             }
             else if ( ifshade == 2 ) //  magnitude colored plot with faceted squares
             {
                 cmap1_init( 0 );
-                if ( if_plfsurf3d )
-                    plfsurf3d( x, y, plf2ops_grid_row_major(), ( PLPointer ) & grid_row_major, XPTS, YPTS, MAG_COLOR | FACETED, NULL, 0 );
-                else
-                    plsurf3d( x, y, (PLFLT_MATRIX) z, XPTS, YPTS, MAG_COLOR | FACETED, NULL, 0 );
+                plfsurf3d( x, y, plf2ops_grid_row_major(), ( PLPointer ) & grid_row_major, XPTS, YPTS, MAG_COLOR | FACETED, NULL, 0 );
             }
-            else if ( ifshade == 3 ) // magnitude colored plot with contours
+            else                  // magnitude colored plot with contours
             {
                 cmap1_init( 0 );
-                if ( if_plfsurf3d )
-                    plfsurf3d( x, y, plf2ops_grid_col_major(), ( PLPointer ) & grid_col_major, XPTS, YPTS, MAG_COLOR | SURF_CONT | BASE_CONT, clevel, nlevel );
-                else
-                    plsurf3d( x, y, (PLFLT_MATRIX) z, XPTS, YPTS, MAG_COLOR | SURF_CONT | BASE_CONT, clevel, nlevel );
-            }
-            else // magnitude colored plot with contours and index limits.
-            {
-                cmap1_init( 0 );
-                plsurf3dl( x, y, (PLFLT_MATRIX) zlimited, XPTS, YPTS, MAG_COLOR | SURF_CONT | BASE_CONT, clevel, nlevel, indexxmin, indexxmax, indexymin, indexymax );
+                plfsurf3d( x, y, plf2ops_grid_col_major(), ( PLPointer ) & grid_col_major, XPTS, YPTS, MAG_COLOR | SURF_CONT | BASE_CONT, clevel, nlevel );
             }
         }
     }
@@ -377,15 +257,8 @@ main( int argc, char *argv[] )
     free( (void *) x );
     free( (void *) y );
     plFree2dGrid( z, XPTS, YPTS );
-    if ( if_plfsurf3d )
-    {
-        free( (void *) z_row_major );
-        free( (void *) z_col_major );
-    }
-
-    plFree2dGrid( zlimited, XPTS, YPTS );
-    free( (void *) indexymin );
-    free( (void *) indexymax );
+    free( (void *) z_row_major );
+    free( (void *) z_col_major );
 
     plend();
 

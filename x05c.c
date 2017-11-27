@@ -1,3 +1,5 @@
+// $Id: x05c.c 11289 2010-10-29 20:44:17Z airwin $
+//
 //      Histogram demo.
 //
 
@@ -12,7 +14,7 @@
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
     int   i;
     PLFLT data[NPTS], delta;
@@ -27,7 +29,7 @@ main( int argc, char *argv[] )
 
 // Fill up data points
 
-    delta = 2.0 * M_PI / (PLFLT) NPTS;
+    delta = 2.0 * M_PI / (double) NPTS;
     for ( i = 0; i < NPTS; i++ )
         data[i] = sin( i * delta );
 

@@ -1,3 +1,5 @@
+// $Id: x04c.c 12873 2013-12-17 01:27:14Z airwin $
+//
 //      Log plot demo.
 //
 
@@ -12,7 +14,7 @@ void plot1( int type );
 //--------------------------------------------------------------------------
 
 int
-main( int argc, char *argv[] )
+main( int argc, const char *argv[] )
 {
 // Parse and process command line arguments
 
@@ -41,19 +43,19 @@ main( int argc, char *argv[] )
 void
 plot1( int type )
 {
-    int           i;
-    static PLFLT  freql[101], ampl[101], phase[101];
-    PLFLT         f0, freq;
-    PLINT         nlegend;
-    PLCHAR_VECTOR text[2], symbols[2];
-    PLINT         opt_array[2];
-    PLINT         text_colors[2];
-    PLINT         line_colors[2];
-    PLINT         line_styles[2];
-    PLFLT         line_widths[2];
-    PLINT         symbol_numbers[2], symbol_colors[2];
-    PLFLT         symbol_scales[2];
-    PLFLT         legend_width, legend_height;
+    int          i;
+    static PLFLT freql[101], ampl[101], phase[101];
+    PLFLT        f0, freq;
+    PLINT        nlegend;
+    const char   *text[2], *symbols[2];
+    PLINT        opt_array[2];
+    PLINT        text_colors[2];
+    PLINT        line_colors[2];
+    PLINT        line_styles[2];
+    PLFLT        line_widths[2];
+    PLINT        symbol_numbers[2], symbol_colors[2];
+    PLFLT        symbol_scales[2];
+    PLFLT        legend_width, legend_height;
 
     pladv( 0 );
 
@@ -109,7 +111,7 @@ plot1( int type )
         plbox( "", 0.0, 0, "cmstv", 30.0, 3 );
         plcol0( 3 );
         plline( 101, freql, phase );
-        plstring( 101, freql, phase, "#(728)" );
+        plstring( 101, freql, phase, "*" );
         plcol0( 3 );
         plmtex( "r", 5.0, 0.5, 0.5, "Phase shift (degrees)" );
         nlegend = 2;
@@ -138,7 +140,7 @@ plot1( int type )
     symbol_colors[1]  = 3;
     symbol_scales[1]  = 1.;
     symbol_numbers[1] = 4;
-    symbols[1]        = "#(728)";
+    symbols[1]        = "*";
     // from the above opt_arrays we can completely ignore everything
     // to do with boxes.
 

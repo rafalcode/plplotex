@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=-g -Wall
 
+LIBSM=-L/opt/local/lib -lplplot
 LIBS0=-lplplotd -lltdl -lm -lcsirocsa -lcsironn -lqhull -lqsastime
 LIBS=-lplplotd -lltdl -lm -lshp -lcsirocsa -lcsironn -lqhull -lqsastime
 
@@ -18,9 +19,15 @@ EXES=x00c x01c
 
 x00c: x00c.c
 	${CC} ${CFLAGS} -o $@ $^ $(LIBS0)
+# for mac
+x00c_: x00c.c
+	${CC} ${CFLAGS} -I/opt/local/include -o $@ $^ $(LIBSM)
 
 x01c: x01c.c
 	${CC} ${CFLAGS} -o $@ $^ $(LIBS)
+# fuer mac
+x01c_: x01c.c
+	${CC} ${CFLAGS} -I/opt/local/include -o $@ $^ $(LIBSM)
 
 .PHONY: clean
 
